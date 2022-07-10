@@ -2,9 +2,7 @@ import sqlite3
 import time
 import os
 import random
-from colorama import Fore 
-import smtplib
-from email.message import EmailMessage
+import PySimpleGUI as sg
 
 
 def send_to_txt(msg):
@@ -17,12 +15,12 @@ def send_to_txt(msg):
 
 def gerador_senhas(qtd):
     f = 0
+    senha = ''
     letras = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
     letras_grandes = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
     especiais = ['!', '@', '#', '$', '%', '*', '&']
     senha2 = []
     escolha = ['a','b','c','d']
-    global confidencial
     while f < qtd:
         f += 1
         a = random.choice(especiais)
@@ -44,48 +42,58 @@ def gerador_senhas(qtd):
             senha2.append(d)   
 
     random.shuffle(senha2)  
-    os.system('cls' if os.name == 'nt' else 'clear')
-    print(Fore.GREEN + 'Senha gerada com sucesso!')
-    senha = "".join(str(v) for v in senha2) 
-    confidencial = senha
+    senha = "".join(str(v) for v in senha2)
+    return senha
 
 
-def decisao_de_senha():
-    os.system('cls' if os.name == 'nt' else 'clear')
-    menu_funcao = ("SIM", "NÃO")
-    global confidencial
-    while True:
-        os.system('cls' if os.name == 'nt' else 'clear')
-        print("*" * 20)
-        print("CRIAR SENHA ALEATÓRIA?")
-        print("*" * 20)
-        cont = 0
-        for x in menu_funcao:
-            cont += 1
-            print(f'[{cont}]{x}')
+def get_information(nome):
+    id = []
+    site = []
+    user = []
+    senha = []
+    try:
+        banco = sqlite3.connect('gerenciador-senhas.db')
+        cursor = banco.cursor()
+        cursor2 = banco.cursor()
+        cursor3 = banco.cursor() 
+        cursor4 = banco.cursor()
+        cursor.execute(F"SELECT id FROM contas WHERE nome = '{nome}'")
+        cursor2.execute(F"SELECT site FROM contas WHERE nome = '{nome}'")
+        cursor3.execute(F"SELECT usuario FROM contas WHERE nome = '{nome}'")
+        cursor4.execute(F"SELECT senha FROM contas WHERE nome = '{nome}'")
+        id = cursor.fetchall()
+        site = cursor2.fetchall()
+        user = cursor3.fetchall()
+        senha = cursor4.fetchall()
+        cursor.execute(F"SELECT id,site,usuario,senha FROM contas WHERE nome = '{nome}'")
+        lista = cursor.fetchall()
+                        
+
+    except Exception as erro:
+        send_to_txt(erro)
+        sg.popup("Erro ao buscar informações!")   
+        
+       
+        
+    if len(lista) == 0:
+            print('Sem credenciais cadastradas!')
+    else:
+        cont = -1
         try:
-            print('')
-            escolha = int(input("Opção: "))
-            if escolha == 1:
-                os.system('cls' if os.name == 'nt' else 'clear')
-                qtd = int(input("Quantidade de caracteres: "))
-                if qtd > 100:
-                    print(Fore.YELLOW + 'Sua senha deve ter até 100 caractares!')
-                    time.sleep(1)    
-                    continue
-                else: 
-                    gerador_senhas(qtd)
-                    time.sleep(0.5)
-                    break
-            elif escolha == 2:
-                os.system('cls' if os.name == 'nt' else 'clear')
-                confidencial = str(input("Senha: "))
-                break
-            else:
-                os.system('cls' if os.name == 'nt' else 'clear')
-                continue
-
+            while True:
+                cont += 1 
+                id_to_str = str(id[cont]).replace("(","").replace(")","").replace(","," ").replace("'","")
+                site_to_str = str(site[cont]).replace("(","").replace(")","").replace(","," ").replace("'","")
+                user_to_str = str(user[cont]).replace("(","").replace(")","").replace(","," ").replace("'","")
+                senha_to_str = str(senha[cont]).replace("(","").replace(")","").replace(","," ").replace("'","")
+                print(F" Identificador: {id_to_str}")
+                print(F" Site: {site_to_str}")
+                print(F" Usuário: {user_to_str}")
+                print(F" Senha: {senha_to_str}")
+                print('')
+                print('')
+                    
         except Exception as erro:
-            send_to_txt(erro)
-            continue   
-
+            pass
+            send_to_txt(erro)  
+             
